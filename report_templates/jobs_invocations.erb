@@ -1,0 +1,35 @@
+<%#
+name: Jobs - Invocations
+snippet: false
+template_inputs:
+- name: job_id
+  required: true
+  input_type: user
+  description: ID of job to report
+  advanced: false
+  value_type: plain
+  resource_type: JobInvocation
+  hidden_value: false
+- name: hosts
+  required: false
+  input_type: user
+  description: Field for filter hosts of job invocation. Leave blank for all hosts.
+  advanced: false
+  value_type: search
+  resource_type: Host
+  hidden_value: false
+model: ReportTemplate
+-%>
+<%- invocation = load_job_invocation_by_id(input('job_id')) -%>
+<%- search_in_hosts_relation(invocation.template_invocations_hosts, input('hosts')).each do |host| -%>
+<%-   task = invocation.sub_task_for_host(host) -%>
+<%-   sub_task_output = task.output_by_type -%>
+<%-   report_row(
+        host: host.name,
+        debug: sub_task_output['debug'],
+        stderr: sub_task_output['stderr'],
+        stdout: sub_task_output['stdout'],
+        ended_at: task.ended_at,
+      ) -%>
+<%- end -%>
+<%= report_render -%>
